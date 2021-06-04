@@ -184,7 +184,6 @@ void GameScene::onUpdate(){
 				GameScene::map[empty_in_col[j] - k - 1][j] = new_jew;
 			}
 		}
-
 		p0 = p0->next;
 	}
 }

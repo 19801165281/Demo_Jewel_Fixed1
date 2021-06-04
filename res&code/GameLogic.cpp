@@ -259,6 +259,8 @@ int GameLogic::eliminate()
 //棋子下移，更新棋盘
 void GameLogic::down()
 {
+    cout << "in down" << endl;
+    int last = 0;
     //设置随机数种子
     srand((int)time(0));
     //将为0的子用上面的子补上，并将空缺处补上随机数
@@ -277,11 +279,18 @@ void GameLogic::down()
                 }
                 //补上第一行的空
                 map[0][i] = rand() % species + 1;
+                //防止产生三连
+                while (map[0][i] == last)
+                {
+                    map[0][i] = rand() % species + 1;
+                    cout << "in while map[0][i] == last, map[0][i]=" << map[0][i] << endl;
+                }
+                last = map[0][i];
+                cout << "last =" << last << endl;
             }
         }
     }
 }
-
 
 //由hint函数调用，来判断相应两子交换后能否产生连子
 bool GameLogic::exchange(int a, int b, int m, int n)
