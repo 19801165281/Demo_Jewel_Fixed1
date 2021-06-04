@@ -176,7 +176,7 @@ void Jewel::Fall(int fall_grids)
 	auto resume = gcnew CallFunc([]() {
 		GameScene::canResume = true;
 		});
-	this->runAction(gcnew Sequence({ delay, fallTo, resume }));
+	this->runAction(gcnew Sequence({ delay, fallTo, delay, resume }));
 	printf("%d falls\n", this->pic_num);
 	//wait_for_a_while();
 }

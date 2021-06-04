@@ -8,8 +8,7 @@
 using namespace std;
 
 
-MatrixNode* p0;
-MatrixNode* q0;
+MatrixNode* p0;//用于捕获动画状态链表
 int GameScene::selected_jewels_numbers = 0;
 Jewel* GameScene::map[8][8];
 bool GameScene::canResume = true;
@@ -97,14 +96,15 @@ void GameScene::onUpdate(){
 		}
 		else
 		{
+			//不相邻的宝石被选中取消选中状态
 			jew1->Select();
 			jew2->Select();
 			jew1->isSelected = false;
 			jew2->isSelected = false;
 		}
-		init_selected_jewels_numbers();
+		init_selected_jewels_numbers();//初始化选中宝石数目
 	}
-	if (p0 && GameScene::canResume)
+	if (p0 && GameScene::canResume)//canResume的设计是动画处理的点睛之笔，仅仅用一个变量就可以控制每轮动画之间的时间间隔
 	{
 		GameScene::canResume = false;
 		//统计每一列下落情况
@@ -114,7 +114,7 @@ void GameScene::onUpdate(){
 		fall_start_from = (int*)malloc(sizeof(int) * MAPCOLNUM);
 		if (!empty_in_col || !fall_start_from) exit(0);
 		memset(empty_in_col, 0, sizeof(int) * MAPCOLNUM);
-		memset(fall_start_from, 0, sizeof(int) * MAPCOLNUM);
+		memset(fall_start_from, 255, sizeof(int) * MAPCOLNUM);
 		//先消子
 		for (int j = 0; j < MAPCOLNUM; j++)
 		{
@@ -123,12 +123,18 @@ void GameScene::onUpdate(){
 				if (p0->map[i][j] == 0)
 				{
 					GameScene::map[i][j]->Break();
+					GameScene::map[i][j] = nullptr;
 					empty_in_col[j]++;
-					fall_start_from[j] = i - 1;
+
+				}
+				else
+				{
+					fall_start_from[j] = i;
 				}
 			}
 		}
 		//再下降
+		MatrixNode* q0 = p0;
 		p0 = p0->next;
 		for (int j = 0; j < MAPCOLNUM; j++)
 		{
@@ -139,11 +145,27 @@ void GameScene::onUpdate(){
 			//将在界内的宝石下降到对应位置
 			if (fall_start_from[j] >= 0)
 			{
-				for (int i = fall_start_from[j]; i >= 0; i--)
+				//统计本列中最靠后的0在哪一排
+				int last_zero_row = MAPCOLNUM - 1;
+				for (int i = MAPCOLNUM - 1; i >= 0; i--)
 				{
-					GameScene::map[i][j]->Fall(empty_in_col[j]);
-					GameScene::map[i + empty_in_col[j]][j] = GameScene::map[i][j];
-					GameScene::map[i][j] = nullptr;
+					if (q0->map[i][j] == 0)
+					{
+						last_zero_row = i;
+						break;
+					}
+				}
+				//从最后一排向上找，如果非零且高于最后一排的零所在行数
+				//则让其下降到最后一排零所在行，且将最后一排所在行数更新
+				for (int i = MAPCOLNUM - 1; i >= 0; i--)
+				{
+					if (q0->map[i][j] != 0 && i < last_zero_row)
+					{
+						GameScene::map[i][j]->Fall(last_zero_row - i);
+						GameScene::map[last_zero_row][j] = GameScene::map[i][j];
+						GameScene::map[i][j] = nullptr;
+						last_zero_row--;
+					}
 				}
 			}
 			//新创建新生成的宝石，安排到对应列上方
